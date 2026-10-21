@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useTheme } from '../../context/ThemeContext'
+import BrandMark from '../ui/BrandMark'
 import styles from './AuthLayout.module.css'
 
 // Full-page shell for the login / register screens
@@ -35,9 +36,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
       >
         <div className={styles.brand}>
           <div className={styles.logoBadge} aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+            <BrandMark size={20} />
           </div>
           <span className={styles.brandTitle}>Life OS</span>
         </div>

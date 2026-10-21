@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
 import { getInitials } from '../../utils/user'
+import BrandMark from '../ui/BrandMark'
 import styles from './Sidebar.module.css'
 
 const NAV_GROUPS = [
@@ -59,9 +60,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         {/* Brand Header */}
         <div className={styles.brand}>
           <div className={styles.logoBadge}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
+            <BrandMark size={20} />
           </div>
 
           <AnimatePresence initial={false}>
