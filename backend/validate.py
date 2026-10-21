@@ -51,10 +51,21 @@ r = client.post("/api/auth/logout", json={})
 check(f"POST /api/auth/logout -> {r.status_code} (expected 200)", r.status_code == 200)
 check_get("/api/dashboard", 401)
 
-# The real development database lives next to this file
-create_app("development")
-db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "lifeos.db")
-check(f"SQLite DB at instance/lifeos.db: {os.path.exists(db_path)}", os.path.exists(db_path))
+# The real development database: local SQLite file, or Postgres/Neon via DATABASE_URL
+from sqlalchemy import inspect  # noqa: E402
+
+from config import describe_database  # noqa: E402
+from extensions import db  # noqa: E402
+
+dev_app = create_app("development")
+dev_uri = dev_app.config["SQLALCHEMY_DATABASE_URI"]
+print(f"-- Development database: {describe_database(dev_uri)}")
+if dev_uri.startswith("sqlite"):
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "instance", "lifeos.db")
+    check(f"SQLite DB at instance/lifeos.db: {os.path.exists(db_path)}", os.path.exists(db_path))
+with dev_app.app_context():
+    tables = set(inspect(db.engine).get_table_names())
+check(f"users + tasks tables exist ({', '.join(sorted(tables)) or 'none'})", {"users", "tasks"} <= tables)
 
 print()
 print("=== Result:", "ALL PASS" if all_pass else "SOME FAILURES", "===")

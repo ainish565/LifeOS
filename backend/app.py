@@ -137,5 +137,9 @@ def register_frontend(app: Flask) -> None:
 # Entry point
 # --------------------------------------------------------------------------- #
 if __name__ == "__main__":
+    from config import describe_database  # noqa: PLC0415
+
     app = create_app("development")
+    # Show which database is in use (no password) — handy when switching to Neon
+    print(f" * Database: {describe_database(app.config['SQLALCHEMY_DATABASE_URI'])}")
     app.run(debug=True, port=5000)

@@ -18,7 +18,7 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 |------------|--------------------------------------------------|
 | Backend    | Python 3, Flask 3, Flask-SQLAlchemy, Flask-CORS  |
 | Auth       | Flask signed-cookie sessions, Werkzeug password hashing (scrypt) |
-| Database   | SQLite (`instance/lifeos.db`)                    |
+| Database   | SQLite (`instance/lifeos.db`) locally, or PostgreSQL (e.g. Neon) via `DATABASE_URL` |
 | Frontend   | React 19 + Vite                                  |
 | Routing    | React Router (client-side SPA)                   |
 | Data       | TanStack Query (wired up for upcoming phases)    |
@@ -59,6 +59,7 @@ Life OS/
 │   ├── config.py           # Config classes (dev/prod/testing) + session cookie settings
 │   ├── extensions.py       # Shared SQLAlchemy instance
 │   ├── requirements.txt    # Python dependencies (requirements-dev.txt adds pytest)
+│   ├── .env.example        # Template for backend/.env (DATABASE_URL etc. — .env is not committed)
 │   ├── validate.py         # API smoke tests
 │   ├── models/user.py      # User model (password hashing, safe to_dict)
 │   ├── services/auth_service.py  # Validation, registration, credential checks
@@ -161,6 +162,32 @@ npm run lint                         # oxlint
 ```
 
 Both use an in-memory database, so they never touch your real data.
+
+### 4. Use a free cloud database (Neon) — optional
+
+By default the app stores data in a local SQLite file. To use a free cloud
+PostgreSQL database instead (same data on every computer, browsable online):
+
+1. Sign up at [neon.tech](https://neon.tech) and create a project (e.g. `lifeos`).
+2. In the project, click **Connect**, turn **Connection pooling off**, and copy the
+   connection string (`postgresql://...neon.tech/neondb?sslmode=require...`).
+3. In `backend/`, copy `.env.example` to `.env` and paste it after `DATABASE_URL=`:
+   ```powershell
+   cd backend
+   copy .env.example .env
+   notepad .env
+   ```
+4. Install the new dependencies and start the backend:
+   ```powershell
+   .\venv\Scripts\python -m pip install -r requirements.txt
+   .\venv\Scripts\python app.py
+   ```
+   The first line printed should be `* Database: PostgreSQL database 'neondb' on ...neon.tech`.
+   Tables are created automatically on first start; register a new account to begin.
+
+`backend/.env` is git-ignored — never commit it, it contains your database password.
+Delete the `DATABASE_URL` line (or the file) to go back to local SQLite. Tests always
+use an in-memory database, whatever `.env` says.
 
 ### Production notes
 
