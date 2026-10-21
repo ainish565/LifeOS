@@ -8,7 +8,7 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 
 ## Current Phase
 
-**Phase 1 — Foundation (React Migration)** — app shell, dashboard with mock widgets, theming, and placeholder pages for upcoming modules.
+**Phase 2 — Authentication & User Accounts** — registration, login/logout, protected routes and a profile menu, on top of the Phase 1 app shell (dashboard with mock widgets, theming, placeholder pages for upcoming modules).
 
 ---
 
@@ -17,6 +17,7 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 | Layer      | Technology                                       |
 |------------|--------------------------------------------------|
 | Backend    | Python 3, Flask 3, Flask-SQLAlchemy, Flask-CORS  |
+| Auth       | Flask signed-cookie sessions, Werkzeug password hashing (scrypt) |
 | Database   | SQLite (`instance/lifeos.db`)                    |
 | Frontend   | React 19 + Vite                                  |
 | Routing    | React Router (client-side SPA)                   |
@@ -27,7 +28,18 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 
 ---
 
-## Features (Phase 1)
+## Features
+
+### Authentication (Phase 2)
+
+- **Register / log in / log out** with server-side validation (plus matching instant checks in the browser).
+- **Passwords** are hashed with Werkzeug (scrypt) — plaintext is never stored, and hashes are never returned by the API.
+- **Duplicate emails** are rejected (case-insensitive, also enforced by a unique index).
+- **Protected app** — every page except `/login` and `/register` requires a session; logged-out visitors are sent to login and returned to the page they wanted afterwards.
+- **Sessions** use a signed, `HttpOnly`, `SameSite=Lax` cookie that lasts 7 days (renewed on each visit). Logging in starts a fresh session (no session fixation), and auth endpoints only accept JSON bodies (blocks cross-site form posts).
+- **Your account in the shell** — name and initials in the sidebar and top bar, a greeting on the dashboard, and a profile dropdown with **Profile**, **Settings** and **Logout**.
+
+### App shell (Phase 1)
 
 - **6 colour themes × light/dark mode** — Lavender, Sage, Sky, Rose, Terracotta, Indigo. Saved in `localStorage`, follows your OS light/dark preference on first visit, applied before first paint (no flash).
 - **Dashboard** — hero summary, stat cards, interactive "Today's Focus" habits, and a quick-create modal (task, note, expense, goal) with toast feedback.
@@ -44,12 +56,17 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 Life OS/
 ├── backend/                # Flask REST API
 │   ├── app.py              # App factory; also serves ../frontend/dist if built
-│   ├── config.py           # Configuration classes (dev/prod)
-│   ├── requirements.txt    # Python dependencies
+│   ├── config.py           # Config classes (dev/prod/testing) + session cookie settings
+│   ├── extensions.py       # Shared SQLAlchemy instance
+│   ├── requirements.txt    # Python dependencies (requirements-dev.txt adds pytest)
 │   ├── validate.py         # API smoke tests
-│   ├── instance/lifeos.db  # SQLite database (auto-created)
-│   ├── models/  services/  # Reserved for Phase 2+
-│   ├── routes/main.py      # REST API blueprint (/api/*)
+│   ├── models/user.py      # User model (password hashing, safe to_dict)
+│   ├── services/auth_service.py  # Validation, registration, credential checks
+│   ├── middleware/auth.py  # Session helpers + @login_required
+│   ├── routes/auth.py      # /api/auth/* (register, login, logout, me)
+│   ├── routes/main.py      # /api/* (dashboard, modules) — login required
+│   ├── tests/              # pytest suite for authentication
+│   ├── instance/           # lifeos.db + dev secret_key (auto-created, not committed)
 │   └── venv/               # Python virtual environment (local, not committed)
 │
 └── frontend/               # React + Vite SPA
@@ -58,12 +75,15 @@ Life OS/
     └── src/
         ├── main.jsx        # React root (Router + React Query)
         ├── App.jsx         # App shell, routes, global shortcuts
-        ├── context/ThemeContext.jsx
+        ├── api/client.js   # fetch wrapper for the Flask API
+        ├── context/        # ThemeContext, AuthContext (current user, login/logout)
         ├── styles/globals.css          # Design tokens for every theme/mode
+        ├── utils/          # Initials, safe redirects, auth form validation
         ├── components/
-        │   ├── layout/     # Sidebar, Topbar
+        │   ├── auth/       # Route guards, login/register layout
+        │   ├── layout/     # Sidebar, Topbar, ProfileMenu
         │   └── ui/         # StatCard, QuickCreateModal, Toast, CommandPalette
-        └── pages/          # Dashboard, Settings, Placeholder, NotFound
+        └── pages/          # Login, Register, Profile, Dashboard, Settings, Placeholder, NotFound
 ```
 
 ---
@@ -114,6 +134,7 @@ npm run dev                          # http://localhost:5173
 ```
 
 Open **http://localhost:5173**. Vite proxies `/api/*` to Flask on port 5000.
+You'll land on the login page — click **Create an account** to register your first user.
 
 ### 2b. Single-server mode — one terminal
 
@@ -132,21 +153,36 @@ Open **http://127.0.0.1:5000**. Re-run `npm run build` after changing frontend c
 
 ```powershell
 cd backend
+.\venv\Scripts\python -m pip install -r requirements-dev.txt   # once: adds pytest
+.\venv\Scripts\python -m pytest      # authentication test suite
 .\venv\Scripts\python validate.py    # API smoke tests
 cd ..\frontend
 npm run lint                         # oxlint
 ```
 
+Both use an in-memory database, so they never touch your real data.
+
+### Production notes
+
+- Set a long random `SECRET_KEY` environment variable — the app refuses to start in production without one. (In development a key is generated once and stored in `backend/instance/secret_key`.)
+- Serve over HTTPS; the production config marks the session cookie `Secure`.
+
 ---
 
 ## API Endpoints
 
-| Method | Endpoint             | Description                                   |
-|--------|----------------------|-----------------------------------------------|
-| GET    | `/api/health`        | Health check                                  |
-| GET    | `/api/dashboard`     | Mock dashboard data (stats, tasks, events, habits) |
-| GET    | `/api/module/<slug>` | Module "coming soon" info (404 for unknown)   |
+| Method | Endpoint             | Login | Description                                   |
+|--------|----------------------|-------|-----------------------------------------------|
+| POST   | `/api/auth/register` |       | Create account `{name, email, password, confirm_password}` and log in |
+| POST   | `/api/auth/login`    |       | Log in `{email, password}`                    |
+| POST   | `/api/auth/logout`   | ✔     | End the session                               |
+| GET    | `/api/auth/me`       |       | Current user, or `{"user": null}`             |
+| GET    | `/api/health`        |       | Health check                                  |
+| GET    | `/api/dashboard`     | ✔     | Mock dashboard data (stats, tasks, events, habits) |
+| GET    | `/api/module/<slug>` | ✔     | Module "coming soon" info (404 for unknown)   |
 
+Protected endpoints return `401` when not logged in. Validation errors return `400` with
+`{"error": "...", "errors": {"field": "message"}}`; an email that is already registered returns `409`.
 Unknown `/api/*` routes return a JSON `404`.
 
 ---
@@ -156,7 +192,7 @@ Unknown `/api/*` routes return a JSON `404`.
 | Phase | Focus                              | Status        |
 |-------|------------------------------------|---------------|
 | 1     | Foundation + React migration       | ✅ Complete   |
-| 2     | Authentication & User Accounts     | Planned       |
+| 2     | Authentication & User Accounts     | ✅ Complete   |
 | 3     | Tasks Module (full CRUD)           | Planned       |
 | 4     | Calendar Module                    | Planned       |
 | 5     | Expenses & Budget Tracker          | Planned       |

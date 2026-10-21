@@ -113,48 +113,6 @@
   box-shadow: 0 0 6px var(--rose);
 }
 
-/* User Avatar with Online Dot */
-.userAvatarPill {
-  position: relative;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  margin-left: 4px;
-}
-
-.avatarCircle {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--brand-gradient);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-sans);
-  font-size: 0.84rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow: var(--brand-shadow);
-  transition: transform 0.15s ease, background 180ms ease, box-shadow 180ms ease;
-}
-
-.userAvatarPill:hover .avatarCircle {
-  transform: scale(1.04);
-}
-
-.onlineBadge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--emerald);
-  border: 2px solid var(--bg-app);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
-}
-
 /* Responsive */
 @media (max-width: 900px) {
   .topbar {
@@ -189,8 +147,7 @@
   .rightSection {
     gap: 6px;
   }
-  .actionBtn,
-  .avatarCircle {
+  .actionBtn {
     width: 34px;
     height: 34px;
   }

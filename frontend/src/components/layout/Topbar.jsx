@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
+import ProfileMenu from './ProfileMenu'
 import styles from './Topbar.module.css'
 
 export default function Topbar({
@@ -127,11 +127,8 @@ export default function Topbar({
           <span className={styles.notificationDot} />
         </button>
 
-        {/* User Avatar with Green Online Indicator & Settings Link */}
-        <Link to="/settings" className={styles.userAvatarPill} aria-label="Open Settings">
-          <div className={styles.avatarCircle}>LO</div>
-          <span className={styles.onlineBadge} />
-        </Link>
+        {/* Profile dropdown: Profile / Settings / Logout */}
+        <ProfileMenu />
       </div>
     </header>
   )

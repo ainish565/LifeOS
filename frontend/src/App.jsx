@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
+import { AuthProvider } from './context/AuthContext'
+import { RequireAuth, GuestOnly } from './components/auth/RouteGuards'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import CommandPalette from './components/ui/CommandPalette'
@@ -9,6 +11,9 @@ import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Placeholder from './pages/Placeholder'
 import NotFound from './pages/NotFound'
+import Profile from './pages/Profile'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
 // Every page: sidebar-style label (used by search) + header title
 const PAGES = [
@@ -22,7 +27,13 @@ const PAGES = [
   { path: '/notes',     label: 'Notes & Journal', title: 'Knowledge & Notes' },
   { path: '/analytics', label: 'Performance',     title: 'Performance Analytics' },
   { path: '/settings',  label: 'Settings',        title: 'System Settings' },
+  { path: '/profile',   label: 'Profile',         title: 'My Profile' },
 ]
+
+const AUTH_PAGE_TITLES = {
+  '/login':    'Log in',
+  '/register': 'Create account',
+}
 
 const SIDEBAR_STORAGE_KEY = 'lifeos-sidebar-collapsed'
 
@@ -115,6 +126,7 @@ function AppShell() {
                 <Route path="/notes" element={<Placeholder module="notes" />} />
                 <Route path="/analytics" element={<Placeholder module="analytics" />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </motion.div>
@@ -131,12 +143,28 @@ function AppShell() {
   )
 }
 
+// Sets the browser tab title on the login / register screens
+function AuthPage({ children }) {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.title = `${AUTH_PAGE_TITLES[pathname] ?? 'Welcome'} · Life OS`
+  }, [pathname])
+  return children
+}
+
 export default function App() {
   return (
     <ThemeProvider>
-      <MotionConfig reducedMotion="user">
-        <AppShell />
-      </MotionConfig>
+      <AuthProvider>
+        <MotionConfig reducedMotion="user">
+          <Routes>
+            <Route path="/login" element={<GuestOnly><AuthPage><Login /></AuthPage></GuestOnly>} />
+            <Route path="/register" element={<GuestOnly><AuthPage><Register /></AuthPage></GuestOnly>} />
+            {/* Everything else is the app shell, for logged-in users only */}
+            <Route path="/*" element={<RequireAuth><AppShell /></RequireAuth>} />
+          </Routes>
+        </MotionConfig>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

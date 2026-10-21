@@ -2,9 +2,12 @@
 routes/main.py — Life OS REST API blueprint.
 
 All endpoints return JSON. No Jinja2 templates.
+Everything except /health requires a logged-in user.
 """
 
 from flask import Blueprint, jsonify, abort
+
+from middleware.auth import login_required
 
 main_bp = Blueprint("main", __name__, url_prefix="/api")
 
@@ -21,6 +24,7 @@ def health():
 
 
 @main_bp.get("/dashboard")
+@login_required
 def dashboard():
     """Return mock dashboard data as JSON."""
     return jsonify({
@@ -103,6 +107,7 @@ def dashboard():
 
 
 @main_bp.get("/module/<string:module>")
+@login_required
 def module_info(module: str):
     """Return info for a coming-soon module."""
     if module not in MODULES:

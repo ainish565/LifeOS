@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
+import { getFirstName } from '../utils/user'
 import StatCard from '../components/ui/StatCard'
 import QuickCreateModal from '../components/ui/QuickCreateModal'
 import Toast from '../components/ui/Toast'
@@ -24,6 +26,8 @@ function getGreeting(date = new Date()) {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const firstName = getFirstName(user?.name)
   const [focusHabits, setFocusHabits] = useState(INITIAL_FOCUS_HABITS)
   const tasksCompleted = 1
   const totalTasks = 5
@@ -185,7 +189,9 @@ export default function Dashboard() {
 
         {/* Hero Left Content */}
         <div className={styles.heroLeft}>
-          <span className={styles.heroSalutation}>{getGreeting()}</span>
+          <span className={styles.heroSalutation}>
+            {getGreeting()}{firstName && `, ${firstName}`}
+          </span>
           <h2 className={styles.heroTitle}>Focus on what matters today.</h2>
           <p className={styles.heroSubtitle}>
             You have {tasksCompleted} of {totalTasks} tasks finished and {habitsCompleted} habits checked off today.

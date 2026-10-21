@@ -4,8 +4,11 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Local SQLite database (recreated automatically on startup)
-backend/instance/*.db
+# Local SQLite database + session signing key (both recreated automatically on startup)
+backend/instance/
+
+# Test caches
+.pytest_cache/
 
 # Environment / secrets
 .env

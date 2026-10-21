@@ -1,0 +1,11 @@
+/* AuthForm.module.css — shared by Login and Register */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form > button[type='submit'] {
+  margin-top: 6px;
+}

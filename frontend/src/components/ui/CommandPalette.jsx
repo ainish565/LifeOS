@@ -2,12 +2,14 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import styles from './CommandPalette.module.css'
 
 // Searchable launcher for pages and quick actions — opened with Ctrl/⌘ + K
 export default function CommandPalette({ pages, onClose }) {
   const navigate = useNavigate()
   const { isDark, toggleMode } = useTheme()
+  const { logout } = useAuth()
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const listRef = useRef(null)
@@ -28,7 +30,15 @@ export default function CommandPalette({ pages, onClose }) {
       keywords: 'theme toggle dark light mode',
       run: toggleMode,
     },
-  ], [pages, navigate, isDark, toggleMode])
+    {
+      id: 'logout',
+      group: 'Actions',
+      label: 'Log out',
+      hint: 'Account',
+      keywords: 'sign out logout',
+      run: logout,
+    },
+  ], [pages, navigate, isDark, toggleMode, logout])
 
   // Every typed word must appear somewhere in the command's searchable text
   const results = useMemo(() => {
