@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import StatCard from '../components/ui/StatCard'
@@ -25,8 +25,21 @@ function getGreeting(date = new Date()) {
 
 export default function Dashboard() {
   const [focusHabits, setFocusHabits] = useState(INITIAL_FOCUS_HABITS)
-  const tasksCompleted = 1
-  const totalTasks = 5
+
+  // Live task stats from the backend
+  const [taskStats, setTaskStats] = useState({
+    total: 0, completed: 0, pending: 0, overdue: 0, due_today: 0, completion_pct: 0
+  })
+
+  useEffect(() => {
+    fetch('/api/tasks/stats')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setTaskStats(data) })
+      .catch(() => {}) // silently fail — dashboard still works with defaults
+  }, [])
+
+  const tasksCompleted = taskStats.completed
+  const totalTasks     = taskStats.total
 
   const habitsCompleted = OTHER_HABITS_DONE + focusHabits.filter((h) => h.done).length
   const totalHabits = 7
@@ -87,10 +100,14 @@ export default function Dashboard() {
       id: 'tasks',
       label: 'Tasks Completed',
       value: `${tasksCompleted}`,
-      sub: `/ ${totalTasks}`,
-      change: `${totalTasks - tasksCompleted} remaining today`,
+      sub: totalTasks > 0 ? `/ ${totalTasks}` : null,
+      change: taskStats.overdue > 0
+        ? `${taskStats.overdue} overdue — needs attention`
+        : taskStats.pending > 0
+          ? `${taskStats.pending} pending today`
+          : 'All tasks done! 🎉',
       color: 'emerald',
-      sparkProgress: Math.round((tasksCompleted / totalTasks) * 100),
+      sparkProgress: totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 0,
       isPositive: true,
     },
     {
@@ -188,7 +205,11 @@ export default function Dashboard() {
           <span className={styles.heroSalutation}>{getGreeting()}</span>
           <h2 className={styles.heroTitle}>Focus on what matters today.</h2>
           <p className={styles.heroSubtitle}>
-            You have {tasksCompleted} of {totalTasks} tasks finished and {habitsCompleted} habits checked off today.
+            {totalTasks > 0
+              ? `${tasksCompleted} of ${totalTasks} tasks done${taskStats.due_today > 0 ? ` · ${taskStats.due_today} due today` : ''}${taskStats.overdue > 0 ? ` · ${taskStats.overdue} overdue` : ''}`
+              : 'No tasks yet — head to Tasks to get started.'
+            }
+            {' '}You have {habitsCompleted} habits checked off today.
           </p>
         </div>
 
@@ -196,7 +217,7 @@ export default function Dashboard() {
         <div className={styles.heroStatCard}>
           <div className={styles.statCol}>
             <span className={styles.statVal}>
-              {tasksCompleted} <span className={styles.statSub}>/ {totalTasks}</span>
+              {tasksCompleted} <span className={styles.statSub}>/ {totalTasks || '—'}</span>
             </span>
             <span className={styles.statLbl}>Tasks Done</span>
           </div>

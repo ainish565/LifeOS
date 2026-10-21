@@ -42,9 +42,11 @@ def create_app(config_name: str = "default") -> Flask:
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
 
     # Register blueprints
-    from routes.main import main_bp  # noqa: PLC0415
+    from routes.main import main_bp    # noqa: PLC0415
+    from routes.tasks import tasks_bp  # noqa: PLC0415
 
     app.register_blueprint(main_bp)
+    app.register_blueprint(tasks_bp)
 
     register_frontend(app)
 
@@ -55,8 +57,9 @@ def create_app(config_name: str = "default") -> Flask:
             return jsonify({"error": "Not found"}), 404
         return error
 
-    # Create database tables
+    # Import all models so SQLAlchemy registers them before create_all()
     with app.app_context():
+        from models import task  # noqa: F401  — registers Task table
         db.create_all()
 
     return app

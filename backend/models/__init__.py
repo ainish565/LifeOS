@@ -1,2 +1,2 @@
-# models/__init__.py
-# Models will be added in future phases.
+﻿# models/__init__.py
+from .task import Task, TaskStatus, TaskPriority  # noqa: F401
