@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import styles from './QuickCreateModal.module.css'
 
+const tabIconProps = {
+  width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+  strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
+}
+
 const TABS = [
-  { id: 'task', label: 'New Task', icon: '✓' },
-  { id: 'note', label: 'Quick Note', icon: '✎' },
-  { id: 'expense', label: 'Log Expense', icon: '$' },
-  { id: 'goal', label: 'New Goal', icon: '◎' },
+  { id: 'task', label: 'New Task', icon: <svg {...tabIconProps}><polyline points="20 6 9 17 4 12" /></svg> },
+  { id: 'note', label: 'Quick Note', icon: <svg {...tabIconProps}><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" /></svg> },
+  { id: 'expense', label: 'Log Expense', icon: <svg {...tabIconProps}><line x1="12" y1="2" x2="12" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg> },
+  { id: 'goal', label: 'New Goal', icon: <svg {...tabIconProps}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg> },
 ]
 
 // Mounted only while open (parent wraps it in AnimatePresence), so form

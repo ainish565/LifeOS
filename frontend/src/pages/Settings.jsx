@@ -92,7 +92,11 @@ function ThemeCard({ themeData, isSelected, previewMode, onSelect }) {
       {/* Card Header */}
       <div className={styles.cardTopRow}>
         <div className={styles.themeNameRow}>
-          <span className={styles.themeEmoji}>{themeData.emoji}</span>
+          <span
+            className={styles.themeSwatch}
+            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
+            aria-hidden="true"
+          />
           <div>
             <div className={styles.themeName}>{themeData.name}</div>
             {previewMode === 'dark' && (
@@ -190,12 +194,11 @@ export default function Settings() {
                 <div className={styles.sectionTitleGroup}>
                   <h2 className={styles.sectionTitle} id="theme-heading">Color Theme</h2>
                   <p className={styles.sectionDesc}>
-                    Choose your color identity. Use the 🌙 button in the header to switch Light ↔ Dark.
+                    Choose your color identity. Use the light/dark button in the top bar to switch modes.
                   </p>
                 </div>
                 <div className={styles.activeThemePill}>
                   <span className={styles.activeDot} />
-                  {currentTheme.emoji}&nbsp;
                   {isDark ? currentTheme.darkName : currentTheme.name}
                   <span style={{ opacity: 0.6, marginLeft: 4 }}>({mode})</span>
                 </div>
@@ -215,10 +218,16 @@ export default function Settings() {
               </div>
 
               <div className={styles.infoBox}>
-                <span className={styles.infoIcon}>ⓘ</span>
+                <span className={styles.infoIcon} aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                </span>
                 <div>
-                  Previews automatically reflect your current <strong>{mode} mode</strong>. Click{' '}
-                  <strong>🌙 / ☀️</strong> in the top header to toggle — your color theme stays the same.
+                  Previews automatically reflect your current <strong>{mode} mode</strong>. Use the{' '}
+                  <strong>light/dark</strong> button in the top bar to toggle — your color theme stays the same.
                   Both preferences are saved to <code>localStorage</code> and restored on next visit.
                 </div>
               </div>
@@ -324,7 +333,7 @@ export default function Settings() {
               {[
                 { label: 'Theme Key', value: `lifeos-theme = "${theme}"` },
                 { label: 'Mode Key', value: `lifeos-mode = "${mode}"` },
-                { label: 'Active Name', value: `${currentTheme.emoji} ${isDark ? currentTheme.darkName : currentTheme.name}` },
+                { label: 'Active Name', value: isDark ? currentTheme.darkName : currentTheme.name },
                 { label: 'Storage Engine', value: 'Browser LocalStorage + SQLite Database' },
               ].map((row) => (
                 <div key={row.label} style={{ padding: '12px 16px', background: 'var(--bg-subtle)', borderRadius: '10px', border: '1px solid var(--border-subtle)', fontSize: '0.83rem', display: 'flex', gap: '12px', alignItems: 'center' }}>

@@ -144,9 +144,9 @@
 }
 
 .checkBullet {
-  font-weight: 800;
+  display: inline-flex;
+  flex-shrink: 0;
   color: var(--emerald);
-  font-size: 0.85rem;
 }
 
 .featureText {

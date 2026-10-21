@@ -118,7 +118,10 @@
   gap: 8px; margin-bottom: 3px;
 }
 .themeNameRow { display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 0; }
-.themeEmoji { font-size: 1.1rem; line-height: 1.2; flex-shrink: 0; }
+.themeSwatch {
+  width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
 .themeName {
   font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700;
   color: var(--text-primary); letter-spacing: -0.01em; line-height: 1.2;

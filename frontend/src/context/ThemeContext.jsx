@@ -6,7 +6,6 @@ export const COLOR_THEMES = [
     id: 'lavender',
     name: 'Lavender Bloom',
     darkName: 'Midnight Lavender',
-    emoji: '💜',
     feel: 'Elegant, soft, calm, aesthetic',
     accentColor: '#7657C5',
     light: {
@@ -36,7 +35,6 @@ export const COLOR_THEMES = [
     id: 'sage',
     name: 'Sage Serenity',
     darkName: 'Deep Sage',
-    emoji: '🌿',
     feel: 'Natural, peaceful, organic',
     accentColor: '#5F8871',
     light: {
@@ -66,7 +64,6 @@ export const COLOR_THEMES = [
     id: 'sky',
     name: 'Skyline',
     darkName: 'Midnight Sky',
-    emoji: '☁️',
     feel: 'Clean, fresh, professional',
     accentColor: '#4F82C2',
     light: {
@@ -96,7 +93,6 @@ export const COLOR_THEMES = [
     id: 'rose',
     name: 'Dusty Rose',
     darkName: 'Plum Noir',
-    emoji: '🌹',
     feel: 'Soft, sophisticated, warm',
     accentColor: '#A45D78',
     light: {
@@ -126,7 +122,6 @@ export const COLOR_THEMES = [
     id: 'peach',
     name: 'Terracotta Glow',
     darkName: 'Ember Terracotta',
-    emoji: '🍑',
     feel: 'Warm, friendly, energetic',
     accentColor: '#C86F4B',
     light: {
@@ -156,7 +151,6 @@ export const COLOR_THEMES = [
     id: 'indigo',
     name: 'Indigo Tide',
     darkName: 'Deep Indigo',
-    emoji: '🩵',
     feel: 'Modern, clean, slightly energetic',
     accentColor: '#566BB8',
     light: {

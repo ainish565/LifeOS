@@ -43,7 +43,7 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 
 - **6 colour themes × light/dark mode** — Lavender, Sage, Sky, Rose, Terracotta, Indigo. Saved in `localStorage`, follows your OS light/dark preference on first visit, applied before first paint (no flash).
 - **Dashboard** — hero summary, stat cards, interactive "Today's Focus" habits, and a quick-create modal (task, note, expense, goal) with toast feedback.
-- **Search / command palette** — `Ctrl + K` (or `⌘ + K`) or the 🔍 button: jump to any page or toggle dark mode.
+- **Search / command palette** — `Ctrl + K` (or `⌘ + K` on Mac) or the search button: jump to any page or toggle dark mode.
 - **Responsive shell** — collapsible sidebar (remembered), slide-in mobile nav, `Esc` closes dialogs and the mobile menu.
 - **Accessible & motion-aware** — keyboard-operable controls, labelled forms, respects *reduced motion*.
 - Placeholder pages for every upcoming module, plus a 404 page.
@@ -175,11 +175,11 @@ Both use an in-memory database, so they never touch your real data.
 |--------|----------------------|-------|-----------------------------------------------|
 | POST   | `/api/auth/register` |       | Create account `{name, email, password, confirm_password}` and log in |
 | POST   | `/api/auth/login`    |       | Log in `{email, password}`                    |
-| POST   | `/api/auth/logout`   | ✔     | End the session                               |
+| POST   | `/api/auth/logout`   | Yes   | End the session                               |
 | GET    | `/api/auth/me`       |       | Current user, or `{"user": null}`             |
 | GET    | `/api/health`        |       | Health check                                  |
-| GET    | `/api/dashboard`     | ✔     | Mock dashboard data (stats, tasks, events, habits) |
-| GET    | `/api/module/<slug>` | ✔     | Module "coming soon" info (404 for unknown)   |
+| GET    | `/api/dashboard`     | Yes   | Mock dashboard data (stats, tasks, events, habits) |
+| GET    | `/api/module/<slug>` | Yes   | Module "coming soon" info (404 for unknown)   |
 
 Protected endpoints return `401` when not logged in. Validation errors return `400` with
 `{"error": "...", "errors": {"field": "message"}}`; an email that is already registered returns `409`.
@@ -191,8 +191,8 @@ Unknown `/api/*` routes return a JSON `404`.
 
 | Phase | Focus                              | Status        |
 |-------|------------------------------------|---------------|
-| 1     | Foundation + React migration       | ✅ Complete   |
-| 2     | Authentication & User Accounts     | ✅ Complete   |
+| 1     | Foundation + React migration       | Complete      |
+| 2     | Authentication & User Accounts     | Complete      |
 | 3     | Tasks Module (full CRUD)           | Planned       |
 | 4     | Calendar Module                    | Planned       |
 | 5     | Expenses & Budget Tracker          | Planned       |

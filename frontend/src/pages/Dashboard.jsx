@@ -96,7 +96,8 @@ export default function Dashboard() {
   }
 
   // Day score: equal weight on task and habit completion
-  const dayScore = Math.round(((tasksCompleted / totalTasks) * 0.5 + (habitsCompleted / totalHabits) * 0.5) * 100)
+  const taskRatio = totalTasks > 0 ? tasksCompleted / totalTasks : 0
+  const dayScore = Math.round((taskRatio * 0.5 + (habitsCompleted / totalHabits) * 0.5) * 100)
 
   // 4 Stat Cards matching the screenshot
   const statCards = [
@@ -109,7 +110,7 @@ export default function Dashboard() {
         ? `${taskStats.overdue} overdue — needs attention`
         : taskStats.pending > 0
           ? `${taskStats.pending} pending today`
-          : 'All tasks done! 🎉',
+          : 'All tasks done!',
       color: 'emerald',
       sparkProgress: totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 0,
       isPositive: true,

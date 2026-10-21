@@ -15,7 +15,16 @@ export default function Toast({ toasts, onDismiss }) {
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className={styles.toastIcon}>
-              {toast.type === 'success' ? '✓' : 'ℹ'}
+              {toast.type === 'success' ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="12" y1="11" x2="12" y2="17" />
+                  <line x1="12" y1="7" x2="12.01" y2="7" />
+                </svg>
+              )}
             </div>
             <div className={styles.toastContent}>
               <div className={styles.toastTitle}>{toast.title}</div>

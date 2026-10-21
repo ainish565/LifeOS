@@ -64,7 +64,7 @@
 }
 
 .tabIcon {
-  font-size: 0.85rem;
+  display: inline-flex;
   color: var(--accent);
 }
 
