@@ -14,6 +14,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { TASK_STATS_QUERY_KEY } from "../api/tasks";
 import Toast from "../components/ui/Toast";
 import styles from "./Tasks.module.css";
 
@@ -442,6 +444,7 @@ function ConfirmDialog({ task, onConfirm, onCancel }) {
 /* ────────────────────────────── main page ────────────────────────────── */
 export default function Tasks() {
   const [tasks,   setTasks]   = useState([]);
+  const queryClient = useQueryClient();
   const [stats,   setStats]   = useState({ total: 0, completed: 0, pending: 0, overdue: 0, completion_pct: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -489,12 +492,14 @@ export default function Tasks() {
       const statsData = await statsRes.json();
       setTasks(Array.isArray(tasksData) ? tasksData : []);
       setStats(statsData);
+      // Keep the sidebar badge in sync without another request
+      queryClient.setQueryData(TASK_STATS_QUERY_KEY, statsData);
     } catch {
       showToast("Error", "Could not load tasks. Is the server running?", "error");
     } finally {
       setLoading(false);
     }
-  }, [activeTab, search, filterPriority, filterCategory, sortBy, showToast]);
+  }, [activeTab, search, filterPriority, filterCategory, sortBy, showToast, queryClient]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 

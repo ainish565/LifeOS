@@ -1,16 +1,34 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useSyncExternalStore } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
+import { fetchTaskStats, TASK_STATS_QUERY_KEY } from '../../api/tasks'
 import { getInitials } from '../../utils/user'
 import BrandMark from '../ui/BrandMark'
 import styles from './Sidebar.module.css'
+
+const MOBILE_QUERY = '(max-width: 768px)'
+
+function useIsMobile() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia(MOBILE_QUERY)
+      mql.addEventListener('change', onChange)
+      return () => mql.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(MOBILE_QUERY).matches
+  )
+}
+
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
 const NAV_GROUPS = [
   {
     title: 'WORKSPACE',
     items: [
       { to: '/', label: 'Overview', icon: IconOverview, exact: true },
-      { to: '/tasks', label: 'Tasks', icon: IconTasks, badge: '5' },
+      { to: '/tasks', label: 'Tasks', icon: IconTasks, badgeKey: 'tasks' },
       { to: '/calendar', label: 'Calendar', icon: IconCalendar },
     ],
   },
@@ -32,9 +50,37 @@ const NAV_GROUPS = [
   },
 ]
 
-export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
+// Live count of open (not completed) tasks for the Tasks badge
+function useTaskBadge() {
+  const { pathname } = useLocation()
+  const { data, refetch } = useQuery({
+    queryKey: TASK_STATS_QUERY_KEY,
+    queryFn: fetchTaskStats,
+    staleTime: 30_000,
+  })
+
+  // Refresh when moving between pages (e.g. after adding a task elsewhere)
+  useEffect(() => {
+    refetch()
+  }, [pathname, refetch])
+
+  if (!data) return null
+  const open = (data.pending ?? 0) + (data.in_progress ?? 0)
+  if (open === 0) return null
+  const overdue = data.overdue ?? 0
+  return {
+    count: open > 99 ? '99+' : String(open),
+    urgent: overdue > 0,
+    label: overdue > 0 ? `${open} open tasks, ${overdue} overdue` : `${open} open tasks`,
+  }
+}
+
+export default function Sidebar({ collapsed: collapsedPref, onToggle, mobileOpen, onMobileClose, onOpenSearch }) {
+  const isMobile = useIsMobile()
+  const collapsed = collapsedPref && !isMobile
   const { user } = useAuth()
   const userName = user?.name ?? ''
+  const badges = { tasks: useTaskBadge() }
 
   return (
     <>
@@ -52,7 +98,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       </AnimatePresence>
 
       <motion.aside
-        className={`${styles.sidebar} ${mobileOpen ? styles.mobileOpen : ''}`}
+        className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''} ${mobileOpen ? styles.mobileOpen : ''}`}
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         aria-label="Main Navigation"
@@ -101,54 +147,88 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           </button>
         </div>
 
+        {/* Search / command palette trigger */}
+        <div className={styles.searchWrap}>
+          <button
+            type="button"
+            className={styles.searchBtn}
+            onClick={onOpenSearch}
+            aria-keyshortcuts="Control+K Meta+K"
+            title={collapsed ? `Search (${IS_MAC ? '⌘' : 'Ctrl'} K)` : undefined}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="20" y1="20" x2="16.2" y2="16.2" />
+            </svg>
+            {!collapsed && (
+              <>
+                <span className={styles.searchLabel}>Search</span>
+                <kbd className={styles.searchKbd}>{IS_MAC ? '⌘' : 'Ctrl'} K</kbd>
+              </>
+            )}
+            {collapsed && <span className="sr-only">Search</span>}
+          </button>
+        </div>
+
         {/* Navigation Sections */}
         <nav className={styles.navContainer}>
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.map((group, groupIndex) => (
             <div key={group.title} className={styles.navGroup}>
-              <AnimatePresence initial={false}>
-                {!collapsed && (
-                  <motion.div
-                    className={styles.groupTitle}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {group.title}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {collapsed ? (
+                groupIndex > 0 && <div className={styles.groupDivider} aria-hidden="true" />
+              ) : (
+                <motion.div
+                  className={styles.groupTitle}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {group.title}
+                </motion.div>
+              )}
 
               <div className={styles.itemsList}>
-                {group.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.exact}
-                    className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <span className={styles.itemIcon}>
-                      <item.icon />
-                    </span>
-                    <AnimatePresence initial={false}>
-                      {!collapsed && (
-                        <motion.span
-                          className={styles.itemLabel}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
+                {group.items.map((item) => {
+                  const badge = item.badgeKey ? badges[item.badgeKey] : null
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.exact}
+                      className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+                      title={collapsed ? (badge ? `${item.label} — ${badge.label}` : item.label) : undefined}
+                    >
+                      <span className={styles.itemIcon}>
+                        <item.icon />
+                        {collapsed && badge && (
+                          <span className={`${styles.iconDot} ${badge.urgent ? styles.urgent : ''}`} aria-hidden="true" />
+                        )}
+                      </span>
+                      <AnimatePresence initial={false}>
+                        {!collapsed && (
+                          <motion.span
+                            className={styles.itemLabel}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      {!collapsed && badge && (
+                        <span
+                          className={`${styles.itemBadge} ${badge.urgent ? styles.urgent : ''}`}
+                          title={badge.label}
+                          aria-label={badge.label}
                         >
-                          {item.label}
-                        </motion.span>
+                          {badge.count}
+                        </span>
                       )}
-                    </AnimatePresence>
-                    {!collapsed && item.badge && (
-                      <span className={styles.itemBadge}>{item.badge}</span>
-                    )}
-                  </NavLink>
-                ))}
+                    </NavLink>
+                  )
+                })}
               </div>
             </div>
           ))}

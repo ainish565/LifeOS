@@ -98,6 +98,7 @@ function AppShell() {
         onToggle={handleToggle}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        onOpenSearch={openPalette}
       />
 
       <div className="main-content">
