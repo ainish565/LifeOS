@@ -13,6 +13,7 @@ from urllib.parse import quote
 
 from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 from flask_cors import CORS
+from sqlalchemy import create_engine
 from werkzeug.security import safe_join
 
 from config import BASE_DIR, config_map
@@ -72,7 +73,16 @@ def create_app(config_name: str = "default") -> Flask:
     with app.app_context():
         import models  # noqa: F401, PLC0415 — registers every model (User, Task, ...)
 
-        db.create_all()
+        migration_uri = app.config.get("SQLALCHEMY_MIGRATION_URI")
+        if migration_uri:
+            # Neon: create tables over the direct connection, not the pooler
+            engine = create_engine(migration_uri, pool_pre_ping=True)
+            try:
+                db.metadata.create_all(engine)
+            finally:
+                engine.dispose()
+        else:
+            db.create_all()
 
     return app
 
