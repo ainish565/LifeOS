@@ -5,9 +5,10 @@ All endpoints return JSON. No Jinja2 templates.
 Everything except /health requires a logged-in user.
 """
 
+from datetime import date
 from flask import Blueprint, jsonify, abort
 
-from middleware.auth import login_required
+from middleware.auth import get_current_user, login_required
 
 main_bp = Blueprint("main", __name__, url_prefix="/api")
 
@@ -26,12 +27,44 @@ def health():
 @main_bp.get("/dashboard")
 @login_required
 def dashboard():
-    """Return mock dashboard data as JSON."""
+    """Return dashboard data as JSON (task stats are live; others remain mock)."""
+    from models.task import Task, TaskStatus  # noqa: PLC0415
+
+    today = date.today()
+    user_id = get_current_user().id
+
+    total      = Task.query.filter_by(user_id=user_id).count()
+    completed  = Task.query.filter_by(user_id=user_id, status=TaskStatus.COMPLETED.value).count()
+    pending    = Task.query.filter_by(user_id=user_id, status=TaskStatus.PENDING.value).count()
+    in_prog    = Task.query.filter_by(user_id=user_id, status=TaskStatus.IN_PROGRESS.value).count()
+    overdue    = Task.query.filter(
+        Task.user_id == user_id,
+        Task.status  != TaskStatus.COMPLETED.value,
+        Task.due_date != None,   # noqa: E711
+        Task.due_date < today,
+    ).count()
+    due_today_tasks = Task.query.filter(
+        Task.user_id  == user_id,
+        Task.status   != TaskStatus.COMPLETED.value,
+        Task.due_date == today,
+    ).order_by(Task.priority).limit(5).all()
+
+    completion_pct = round((completed / total * 100)) if total else 0
+
     return jsonify({
         "greeting_stats": {
-            "tasks_done": 8,
-            "remaining": 4,
-            "upcoming": 3,
+            "tasks_done":  completed,
+            "remaining":   pending + in_prog,
+            "upcoming":    total,
+        },
+        "task_stats": {
+            "total":          total,
+            "completed":      completed,
+            "pending":        pending,
+            "in_progress":    in_prog,
+            "overdue":        overdue,
+            "due_today":      len(due_today_tasks),
+            "completion_pct": completion_pct,
         },
         "stat_cards": [
             {
@@ -80,13 +113,7 @@ def dashboard():
                 {"label": "Budget Used", "value": "$342 / $500", "percent": 68, "color": "danger"},
             ],
         },
-        "tasks": [
-            {"name": "Finish project proposal", "category": "Work", "priority": "high", "due": "Today, 5 PM", "status": "in-progress"},
-            {"name": "Review pull requests", "category": "Dev", "priority": "medium", "due": "Today, 7 PM", "status": "pending"},
-            {"name": "Call with design team", "category": "Meetings", "priority": "normal", "due": "Tomorrow, 10 AM", "status": "scheduled"},
-            {"name": "Write weekly report", "category": "Work", "priority": "medium", "due": "Tomorrow, 12 PM", "status": "pending"},
-            {"name": "Read React docs", "category": "Study", "priority": "low", "due": "This week", "status": "done"},
-        ],
+        "tasks": [t.to_dict() for t in due_today_tasks],
         "events": [
             {"title": "Team Standup", "meta": "Work · Daily", "time": "9:00 AM", "color": "primary"},
             {"title": "Project Deadline", "meta": "Work · Aug 19", "time": "5:00 PM", "color": "warning"},

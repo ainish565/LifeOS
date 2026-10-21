@@ -8,6 +8,7 @@ import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import CommandPalette from './components/ui/CommandPalette'
 import Dashboard from './pages/Dashboard'
+import Tasks from './pages/Tasks'
 import Settings from './pages/Settings'
 import Placeholder from './pages/Placeholder'
 import NotFound from './pages/NotFound'
@@ -117,7 +118,7 @@ function AppShell() {
             >
               <Routes location={location}>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/tasks" element={<Placeholder module="tasks" />} />
+                <Route path="/tasks" element={<Tasks />} />
                 <Route path="/calendar" element={<Placeholder module="calendar" />} />
                 <Route path="/goals" element={<Placeholder module="goals" />} />
                 <Route path="/habits" element={<Placeholder module="habits" />} />
