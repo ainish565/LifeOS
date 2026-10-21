@@ -1,0 +1,197 @@
+/* Topbar.module.css */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 36px 12px;
+  flex-shrink: 0;
+  background-color: transparent;
+  position: relative;
+  z-index: 30;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.mobileMenuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--topbar-btn-color);
+  background: var(--topbar-btn-bg);
+  border: 1px solid var(--topbar-btn-border);
+  transition: all 0.15s ease;
+}
+
+.mobileMenuBtn:hover {
+  color: var(--text-primary);
+  background: var(--topbar-btn-hover);
+}
+
+.pageTitle {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Date & Time Capsule Badge */
+.dateTimeCapsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: var(--topbar-btn-bg);
+  border: 1px solid var(--topbar-btn-border);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-card);
+  user-select: none;
+}
+
+.calendarIcon {
+  color: var(--accent);
+}
+
+.capsuleDot {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+}
+
+/* Right Section */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Circular Action Buttons */
+.actionBtn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--topbar-btn-color);
+  background: var(--topbar-btn-bg);
+  border: 1px solid var(--topbar-btn-border);
+  box-shadow: var(--shadow-card);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  color: var(--text-primary);
+  background: var(--topbar-btn-hover);
+  border-color: var(--border-hover);
+}
+
+.notificationDot {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 6px var(--rose);
+}
+
+/* User Avatar with Online Dot */
+.userAvatarPill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.avatarCircle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--brand-shadow);
+  transition: transform 0.15s ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.userAvatarPill:hover .avatarCircle {
+  transform: scale(1.04);
+}
+
+.onlineBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--emerald);
+  border: 2px solid var(--bg-app);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .topbar {
+    padding: 18px 20px 8px;
+  }
+  .dateTimeCapsule {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobileMenuBtn {
+    display: flex;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 14px 14px 6px;
+    gap: 10px;
+  }
+  .leftSection {
+    gap: 10px;
+  }
+  .pageTitle {
+    font-size: 1.08rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .rightSection {
+    gap: 6px;
+  }
+  .actionBtn,
+  .avatarCircle {
+    width: 34px;
+    height: 34px;
+  }
+}

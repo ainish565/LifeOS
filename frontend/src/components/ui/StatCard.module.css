@@ -1,0 +1,102 @@
+/* StatCard.module.css */
+
+.statCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 16px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  background-color: var(--bg-card-hover);
+  box-shadow: var(--shadow-hover);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.iconCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.metricRow {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-bottom: 14px;
+}
+
+.valueNumber {
+  font-family: var(--font-sans);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.valueSub {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Micro Progress Bar */
+.progressBarTrack {
+  height: 3.5px;
+  border-radius: 9999px;
+  background-color: var(--bg-input);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footerRow {
+  display: flex;
+  align-items: center;
+}
+
+.footerText {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.positiveText {
+  color: var(--emerald);
+  font-weight: 600;
+}

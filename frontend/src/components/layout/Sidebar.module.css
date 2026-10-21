@@ -1,0 +1,313 @@
+/* Sidebar.module.css */
+
+.sidebar {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow: hidden;
+  user-select: none;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 180ms ease,
+              border-color 180ms ease;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 18px 20px;
+  flex-shrink: 0;
+  position: relative;
+  min-height: 70px;
+}
+
+.logoBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  box-shadow: var(--brand-shadow);
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.brandTitle {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.brandSub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+/* Collapse Trigger */
+.collapseToggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s ease;
+}
+
+.collapseToggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+/* Navigation List */
+.navContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px;
+  gap: 22px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupTitle {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--nav-group-title);
+  padding: 0 10px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--nav-item-color);
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navItem:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+/* Active Nav Item */
+.navItem.active {
+  color: var(--nav-active-text);
+  font-weight: 600;
+  background: var(--nav-active-bg);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.itemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+.navItem.active .itemIcon {
+  color: var(--accent);
+}
+
+.itemLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.itemBadge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.navItem.active .itemBadge {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+/* Footer Section */
+.sidebarFooter {
+  padding: 14px 12px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar);
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.footerItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--nav-item-color);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.footerItem:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.footerItem.activeFooter {
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+}
+
+.avatarMini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: var(--brand-shadow);
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.footerUser {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.userName {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.settingsIcon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.footerItem:hover .settingsIcon,
+.footerItem.activeFooter .settingsIcon {
+  color: var(--accent);
+}
+
+/* Mobile Overlay */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 240px !important;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .sidebar.mobileOpen {
+    transform: translateX(0);
+  }
+
+  .overlay {
+    display: block;
+  }
+
+  .collapseToggle {
+    display: none;
+  }
+}

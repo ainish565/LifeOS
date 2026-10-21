@@ -1,0 +1,426 @@
+/* Dashboard.module.css */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  user-select: none;
+}
+
+/* ─────────────────────────────────────────────────────────── *
+   1. HERO BANNER WITH SUNSET ART & STAT BOX
+ * ─────────────────────────────────────────────────────────── */
+.heroBanner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 36px;
+  min-height: 190px;
+  background: var(--hero-bg);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Mountain Sunset Graphic */
+.sunsetArtContainer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.sunsetSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.heroLeft {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 520px;
+}
+
+.heroSalutation {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--hero-salutation);
+  letter-spacing: -0.01em;
+}
+
+.heroTitle {
+  font-family: var(--font-sans);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: 0.86rem;
+  color: var(--hero-subtitle);
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* Floating Right Stat Card */
+.heroStatCard {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+  background: var(--hero-stat-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--hero-stat-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.statCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.statVal {
+  font-family: var(--font-sans);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.statSub {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.statLbl {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.statDivider {
+  width: 1px;
+  height: 36px;
+  background: var(--border-card);
+}
+
+/* ─────────────────────────────────────────────────────────── *
+   2. STAT CARDS 4-COLUMN GRID
+ * ─────────────────────────────────────────────────────────── */
+.statCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────── *
+   3. BOTTOM ROW (2-COLUMNS: TODAY'S FOCUS & QUICK ACTIONS)
+ * ─────────────────────────────────────────────────────────── */
+.bottomRowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* Card Shared Styling */
+.focusCard,
+.actionsCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.cardTitle {
+  font-family: var(--font-sans);
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.cardSubtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ── Potted Plant Graphic in Focus Card ── */
+.plantGraphicContainer {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  width: 180px;
+  height: 240px;
+  pointer-events: none;
+  opacity: 0.88;
+  z-index: 1;
+}
+
+.plantSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Focus List */
+.focusList {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+  max-width: 440px;
+}
+
+.focusItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.focusItem:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.focusItemDone {
+  background: var(--bg-subtle);
+  opacity: 0.85;
+}
+
+.checkCircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.8px solid;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+
+.checkedCircle {
+  background-color: var(--emerald);
+  border-color: var(--emerald);
+}
+
+.focusText {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.rightIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hollowDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-faint);
+}
+
+.focusFooter {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+}
+
+.viewHabitsLink {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  transition: opacity 0.15s ease;
+}
+
+.viewHabitsLink:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ── Quick Actions Grid ── */
+.quickGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.16s ease;
+}
+
+.actionBtn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.actionIconBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid;
+}
+
+.badgeGreen {
+  background: var(--emerald-subtle);
+  color: var(--emerald);
+  border-color: var(--emerald-border);
+}
+
+.badgeBlue {
+  background: var(--sky-subtle);
+  color: var(--sky);
+  border-color: var(--sky-border);
+}
+
+.badgeOrange {
+  background: var(--amber-subtle);
+  color: var(--amber);
+  border-color: var(--amber-border);
+}
+
+.badgeRose {
+  background: var(--rose-subtle);
+  color: var(--rose);
+  border-color: var(--rose-border);
+}
+
+.dollarSign {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.actionLabel {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ─────────────────────────────────────────────────────────── *
+   4. RESPONSIVE BREAKPOINTS
+ * ─────────────────────────────────────────────────────────── */
+@media (max-width: 1180px) {
+  .statCardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .heroBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .sunsetSvg {
+    right: -10%;
+    opacity: 0.5;
+  }
+  .heroStatCard {
+    width: 100%;
+    justify-content: space-around;
+  }
+  .bottomRowGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .statCardsGrid {
+    grid-template-columns: 1fr;
+  }
+  .quickGrid {
+    grid-template-columns: 1fr;
+  }
+  .heroBanner {
+    padding: 24px 20px;
+  }
+  .heroStatCard {
+    gap: 8px;
+    padding: 14px 10px;
+  }
+  .statCol {
+    flex: 1;
+    min-width: 0;
+  }
+  .statVal {
+    font-size: 1.25rem;
+  }
+}
