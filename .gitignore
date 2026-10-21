@@ -6,14 +6,24 @@ __pycache__/
 
 # Local SQLite database + session signing key (both recreated automatically on startup)
 backend/instance/
+# Any other local database files, wherever they end up
+*.db
+*.sqlite
+*.sqlite3
 
 # Test caches
 .pytest_cache/
 
-# Environment / secrets
+# Environment / secrets — DATABASE_URL lives in .env.local (written by `neon env pull`)
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+# Neon CLI link (project/branch IDs for whoever ran `neon link`)
+.neon
+# Personal Claude Code settings (shared project config is .mcp.json + .claude/skills)
+.claude/settings.local.json
 
 # OS / editor
 .DS_Store
@@ -21,5 +31,4 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
-.neon
 node_modules/

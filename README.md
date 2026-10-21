@@ -18,7 +18,7 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 |------------|--------------------------------------------------|
 | Backend    | Python 3, Flask 3, Flask-SQLAlchemy, Flask-CORS  |
 | Auth       | Flask signed-cookie sessions, Werkzeug password hashing (scrypt) |
-| Database   | SQLite (`instance/lifeos.db`) locally, or PostgreSQL (e.g. Neon) via `DATABASE_URL` |
+| Database   | Neon Postgres (shared, via `DATABASE_URL` in `.env.local`) or local SQLite fallback |
 | Frontend   | React 19 + Vite                                  |
 | Routing    | React Router (client-side SPA)                   |
 | Data       | TanStack Query (wired up for upcoming phases)    |
@@ -59,7 +59,7 @@ Life OS/
 │   ├── config.py           # Config classes (dev/prod/testing) + session cookie settings
 │   ├── extensions.py       # Shared SQLAlchemy instance
 │   ├── requirements.txt    # Python dependencies (requirements-dev.txt adds pytest)
-│   ├── .env.example        # Template for backend/.env (DATABASE_URL etc. — .env is not committed)
+│   ├── .env.example        # Template for an optional backend/.env override (never committed)
 │   ├── validate.py         # API smoke tests
 │   ├── models/user.py      # User model (password hashing, safe to_dict)
 │   ├── services/auth_service.py  # Validation, registration, credential checks
@@ -163,31 +163,51 @@ npm run lint                         # oxlint
 
 Both use an in-memory database, so they never touch your real data.
 
-### 4. Use a free cloud database (Neon) — optional
+### 4. Database: local SQLite or the shared Neon database
 
-By default the app stores data in a local SQLite file. To use a free cloud
-PostgreSQL database instead (same data on every computer, browsable online):
+**You don't need Neon access to work on this project.** After the one-time setup
+above, the backend automatically uses a local SQLite file
+(`backend/instance/lifeos.db`) with your own private test data. Every feature,
+test and page works the same way. On startup it prints which one it is using:
 
-1. Sign up at [neon.tech](https://neon.tech) and create a project (e.g. `lifeos`).
-2. In the project, click **Connect**, turn **Connection pooling off**, and copy the
-   connection string (`postgresql://...neon.tech/neondb?sslmode=require...`).
-3. In `backend/`, copy `.env.example` to `.env` and paste it after `DATABASE_URL=`:
+```
+ * Database: SQLite file ...\backend\instance\lifeos.db
+```
+
+#### Connecting to the shared Neon database (team members with access)
+
+The real data lives in a Neon Postgres project. Access is controlled by Neon
+accounts — **no passwords are shared or stored in this repo**.
+
+1. Ask the project owner to invite you to the Neon organization
+   (Neon console → Organization settings → Members).
+2. Install the Neon CLI and sign in with your own account:
    ```powershell
-   cd backend
-   copy .env.example .env
-   notepad .env
+   npm i -g neon
+   neon login
    ```
-4. Install the new dependencies and start the backend:
+3. In the project root, link the project and create **your own branch** to work on
+   (an instant private copy of the data, so you never change production by accident):
    ```powershell
-   .\venv\Scripts\python -m pip install -r requirements.txt
-   .\venv\Scripts\python app.py
+   neon link                        # pick the LifeOS project
+   neon checkout dev-yourname --create
    ```
-   The first line printed should be `* Database: PostgreSQL database 'neondb' on ...neon.tech`.
-   Tables are created automatically on first start; register a new account to begin.
+   This writes your connection details to `.env.local` (git-ignored). The backend
+   reads it automatically; restart `python app.py` and it prints
+   `* Database: PostgreSQL database 'neondb' on ...neon.tech`.
+4. Switch back to the main data with `neon checkout production`, or remove
+   `.env.local` to return to local SQLite.
 
-`backend/.env` is git-ignored — never commit it, it contains your database password.
-Delete the `DATABASE_URL` line (or the file) to go back to local SQLite. Tests always
-use an in-memory database, whatever `.env` says.
+#### Keeping the database secure
+
+- Connection strings contain the database password. They only ever live in
+  git-ignored files (`.env.local`, `backend/.env`) — never paste them into code,
+  commits, chats, issues or screenshots.
+- If one leaks: in the Neon console reset the role's password
+  (Branches → Roles → Reset password), then everyone runs `neon env pull` to get the new one.
+- To remove someone's access, remove them from the Neon organization; nothing in the
+  repo needs to change.
+- Tests (`pytest`, `validate.py`'s API checks) always use a throwaway in-memory database.
 
 ### Production notes
 
