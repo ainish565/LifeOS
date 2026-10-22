@@ -43,11 +43,23 @@ def create_app(config_name: str = "default") -> Flask:
     # Initialize extensions
     db.init_app(app)
 
-    # Enable CORS for all /api/* routes (allows React dev server on :5173).
-    # In development Vite proxies /api, so requests are normally same-origin anyway.
+    # Enable CORS for all /api/* routes.
+    # - Local dev: Vite runs on :5173 and proxies /api, so requests are same-origin.
+    # - Production (Vercel): the frontend service is on the same Vercel domain;
+    #   additional origins can be added via CORS_ORIGINS env var (comma-separated).
+    extra_origins = [
+        o.strip()
+        for o in os.environ.get("CORS_ORIGINS", "").split(",")
+        if o.strip()
+    ]
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        *extra_origins,
+    ]
     CORS(
         app,
-        resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}},
+        resources={r"/api/*": {"origins": allowed_origins}},
         supports_credentials=True,
     )
 

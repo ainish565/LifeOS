@@ -78,7 +78,7 @@ def dashboard():
     )
     month_spending = _sum_expenses(
         Expense.query.filter_by(user_id=user_id)
-                     .filter(func.strftime("%Y-%m", Expense.expense_date) == month_str)
+                     .filter(func.to_char(Expense.expense_date, "YYYY-MM") == month_str)
     )
 
     budget_row = MonthlyBudget.query.filter_by(user_id=user_id, month=month_str).first()
@@ -90,7 +90,7 @@ def dashboard():
     cat_row = (
         db.session.query(Expense.category, func.sum(Expense.amount).label("s"))
         .filter_by(user_id=user_id)
-        .filter(func.strftime("%Y-%m", Expense.expense_date) == month_str)
+        .filter(func.to_char(Expense.expense_date, "YYYY-MM") == month_str)
         .group_by(Expense.category)
         .order_by(func.sum(Expense.amount).desc())
         .first()
