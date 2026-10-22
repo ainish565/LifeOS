@@ -103,11 +103,19 @@ if (-not (Test-VenvRuns)) {
     & $sys.File @($sys.Args) -m venv --clear $VenvDir
     if ($LASTEXITCODE -ne 0 -or -not (Test-VenvRuns)) { Fail 'Could not create backend\venv.' }
 }
+# Install again whenever requirements.txt changed since the last successful install, for
+# example after a `git pull` that brought in a new library. A fingerprint of the file is
+# remembered inside the venv.
+$ReqFile = Join-Path $Backend 'requirements.txt'
+$ReqMark = Join-Path $VenvDir '.requirements.sha256'
+$ReqHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ReqFile).Hash
+$ReqChanged = (-not (Test-Path $ReqMark)) -or ((Get-Content -LiteralPath $ReqMark -Raw).Trim() -ne $ReqHash)
 & $VenvPy -c "import flask, flask_sqlalchemy, flask_cors, psycopg, dotenv" 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Write-Step 'Installing backend dependencies (first run only)...'
-    & $VenvPy -m pip install --disable-pip-version-check -r (Join-Path $Backend 'requirements.txt')
+if ($LASTEXITCODE -ne 0 -or $ReqChanged) {
+    Write-Step 'Installing backend dependencies (first run, or requirements.txt changed)...'
+    & $VenvPy -m pip install --disable-pip-version-check -r $ReqFile
     if ($LASTEXITCODE -ne 0) { Fail 'pip install failed. See the messages above.' }
+    Set-Content -LiteralPath $ReqMark -Value $ReqHash
 }
 
 # --- 2. Frontend: Node + npm packages ----------------------------------------
@@ -116,11 +124,21 @@ $Npm  = Get-Command npm.cmd -ErrorAction SilentlyContinue
 if (-not $Node -or -not $Npm) {
     Fail 'Node.js was not found. Install it from https://nodejs.org and run dev.bat again.'
 }
-if (-not (Test-Path $ViteJs)) {
-    Write-Step 'Installing frontend dependencies (first run only)...'
+# Same idea for npm: install again when package-lock.json changed since the last successful
+# install (a teammate added a library, then you ran `git pull`). Without this, Vite fails
+# with "Failed to resolve import ..." until someone remembers to run `npm install`.
+$LockFile = Join-Path $Frontend 'package-lock.json'
+if (-not (Test-Path $LockFile)) { $LockFile = Join-Path $Frontend 'package.json' }
+$NpmMark = Join-Path $Frontend 'node_modules\.lifeos-install.sha256'
+$NpmChanged = (-not (Test-Path $ViteJs)) -or (-not (Test-Path $NpmMark)) -or
+    ((Get-Content -LiteralPath $NpmMark -Raw).Trim() -ne (Get-FileHash -Algorithm SHA256 -LiteralPath $LockFile).Hash)
+if ($NpmChanged) {
+    Write-Step 'Installing frontend dependencies (first run, or package.json changed)...'
     Push-Location $Frontend
     try { & $Npm.Source install } finally { Pop-Location }
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $ViteJs)) { Fail 'npm install failed. See the messages above.' }
+    # Fingerprint taken after the install, in case npm itself touched the lock file
+    Set-Content -LiteralPath $NpmMark -Value (Get-FileHash -Algorithm SHA256 -LiteralPath $LockFile).Hash
 }
 
 $DbInfo = Get-DatabaseInfo
