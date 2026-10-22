@@ -25,21 +25,57 @@ function getGreeting(date = new Date()) {
   return 'Good evening'
 }
 
+const CATEGORY_COLORS = {
+  Study: '#8b5cf6',
+  Personal: '#10b981',
+  Work: '#f59e0b',
+  Meeting: '#0ea5e9',
+  Birthday: '#ec4899',
+  Other: '#6b7280',
+}
+
+function formatEventTime(timeStr) {
+  if (!timeStr) return 'All day'
+  const [h, m] = timeStr.split(':')
+  let hr = parseInt(h, 10)
+  const ampm = hr >= 12 ? 'PM' : 'AM'
+  hr = hr % 12 || 12
+  return `${hr}:${m || '00'} ${ampm}`
+}
+
+function formatEventDate(iso) {
+  if (!iso) return ''
+  const parts = iso.split('-')
+  const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 export default function Dashboard() {
   const { user } = useAuth()
   const firstName = getFirstName(user?.name)
   const [focusHabits, setFocusHabits] = useState(INITIAL_FOCUS_HABITS)
 
-  // Live task stats from the backend
+  // Live task stats and event data from the backend
   const [taskStats, setTaskStats] = useState({
     total: 0, completed: 0, pending: 0, overdue: 0, due_today: 0, completion_pct: 0
   })
+  const [todayEvents, setTodayEvents] = useState([])
+  const [upcomingEvents, setUpcomingEvents] = useState([])
+  const [todayTasks, setTodayTasks] = useState([])
+  const [activeEventTab, setActiveEventTab] = useState('today')
 
   useEffect(() => {
-    fetch('/api/tasks/stats')
+    fetch('/api/dashboard')
       .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setTaskStats(data) })
-      .catch(() => {}) // silently fail — dashboard still works with defaults
+      .then((data) => {
+        if (data) {
+          if (data.task_stats) setTaskStats(data.task_stats)
+          if (data.today_events) setTodayEvents(data.today_events)
+          if (data.upcoming_events) setUpcomingEvents(data.upcoming_events)
+          if (data.today_tasks) setTodayTasks(data.today_tasks)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const tasksCompleted = taskStats.completed
@@ -116,14 +152,14 @@ export default function Dashboard() {
       isPositive: true,
     },
     {
-      id: 'habits',
-      label: 'Daily Habits',
-      value: `${habitsCompleted}`,
-      sub: `/ ${totalHabits}`,
-      change: '18 day streak on focus',
+      id: 'events',
+      label: "Today's Events",
+      value: `${todayEvents.length}`,
+      sub: upcomingEvents.length > 0 ? `/ ${upcomingEvents.length} up` : null,
+      change: todayEvents.length > 0 ? `${todayEvents.length} scheduled today` : 'No events today',
       color: 'purple',
-      sparkProgress: Math.round((habitsCompleted / totalHabits) * 100),
-      isPositive: false,
+      sparkProgress: todayEvents.length > 0 ? Math.min(100, todayEvents.length * 25) : 0,
+      isPositive: true,
     },
     {
       id: 'focus',
@@ -254,7 +290,165 @@ export default function Dashboard() {
         ))}
       </section>
 
-      {/* ── 3. Bottom Row: Today's Focus & Quick Actions ── */}
+      {/* ── 3. Schedule & Tasks Dashboard Widgets ── */}
+      <section className={styles.scheduleTasksGrid} aria-label="Schedule and Tasks">
+        {/* Left Widget: Events (Today's & Upcoming) */}
+        <div className={styles.widgetCard}>
+          <div className={styles.widgetHeader}>
+            <div className={styles.widgetTitleWrap}>
+              <h3 className={styles.widgetTitle}>Events & Schedule</h3>
+              <div className={styles.sectionTabs}>
+                <button
+                  type="button"
+                  className={`${styles.sectionTabBtn} ${activeEventTab === 'today' ? styles.sectionTabBtnActive : ''}`}
+                  onClick={() => setActiveEventTab('today')}
+                >
+                  Today ({todayEvents.length})
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.sectionTabBtn} ${activeEventTab === 'upcoming' ? styles.sectionTabBtnActive : ''}`}
+                  onClick={() => setActiveEventTab('upcoming')}
+                >
+                  Upcoming ({upcomingEvents.length})
+                </button>
+              </div>
+            </div>
+            <Link to="/calendar" className={styles.widgetLink}>
+              Calendar View →
+            </Link>
+          </div>
+
+          <div className={styles.itemList}>
+            {activeEventTab === 'today' ? (
+              todayEvents.length > 0 ? (
+                todayEvents.map((ev) => (
+                  <div key={ev.id} className={styles.itemRow}>
+                    <div className={styles.itemLeft}>
+                      <span
+                        className={styles.itemCategoryDot}
+                        style={{ backgroundColor: CATEGORY_COLORS[ev.category] || 'var(--accent)' }}
+                      />
+                      <div className={styles.itemMainInfo}>
+                        <span className={styles.itemTitle}>{ev.title}</span>
+                        <span className={styles.itemMeta}>
+                          {formatEventTime(ev.start_time)}
+                          {ev.end_time ? ` - ${formatEventTime(ev.end_time)}` : ''}
+                          {ev.description ? ` · ${ev.description}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.itemRight}>
+                      <span className={styles.catBadge}>{ev.category}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.emptyStateNotice}>
+                  No events scheduled for today.{' '}
+                  <Link to="/calendar" className={styles.widgetLink}>
+                    Schedule in Calendar →
+                  </Link>
+                </div>
+              )
+            ) : (
+              upcomingEvents.length > 0 ? (
+                upcomingEvents.map((ev) => (
+                  <div key={ev.id} className={styles.itemRow}>
+                    <div className={styles.itemLeft}>
+                      <span
+                        className={styles.itemCategoryDot}
+                        style={{ backgroundColor: CATEGORY_COLORS[ev.category] || 'var(--accent)' }}
+                      />
+                      <div className={styles.itemMainInfo}>
+                        <span className={styles.itemTitle}>{ev.title}</span>
+                        <span className={styles.itemMeta}>
+                          {formatEventDate(ev.event_date)}
+                          {ev.start_time ? ` · ${formatEventTime(ev.start_time)}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.itemRight}>
+                      <span className={styles.catBadge}>{ev.category}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.emptyStateNotice}>
+                  No upcoming events scheduled.{' '}
+                  <Link to="/calendar" className={styles.widgetLink}>
+                    Add an event →
+                  </Link>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Right Widget: Today's Tasks */}
+        <div className={styles.widgetCard}>
+          <div className={styles.widgetHeader}>
+            <div className={styles.widgetTitleWrap}>
+              <h3 className={styles.widgetTitle}>Today's Tasks</h3>
+              <span className={styles.widgetBadge}>{todayTasks.length} due</span>
+            </div>
+            <Link to="/tasks" className={styles.widgetLink}>
+              Tasks Workspace →
+            </Link>
+          </div>
+
+          <div className={styles.itemList}>
+            {todayTasks.length > 0 ? (
+              todayTasks.map((t) => {
+                const priorityClass =
+                  t.priority === 'Urgent'
+                    ? styles.priorityUrgent
+                    : t.priority === 'High'
+                    ? styles.priorityHigh
+                    : t.priority === 'Medium'
+                    ? styles.priorityMedium
+                    : styles.priorityLow
+
+                return (
+                  <div key={t.id} className={styles.itemRow}>
+                    <div className={styles.itemLeft}>
+                      <div className={styles.itemMainInfo}>
+                        <span
+                          className={styles.itemTitle}
+                          style={{
+                            textDecoration: t.status === 'Completed' ? 'line-through' : 'none',
+                            opacity: t.status === 'Completed' ? 0.6 : 1,
+                          }}
+                        >
+                          {t.title}
+                        </span>
+                        <span className={styles.itemMeta}>
+                          {t.status}
+                          {t.category ? ` · ${t.category}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.itemRight}>
+                      <span className={`${styles.priorityBadge} ${priorityClass}`}>
+                        {t.priority}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className={styles.emptyStateNotice}>
+                No tasks due today. All caught up!{' '}
+                <Link to="/tasks" className={styles.widgetLink}>
+                  Add task →
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. Bottom Row: Today's Focus & Quick Actions ── */}
       <div className={styles.bottomRowGrid}>
         {/* Left Card: Today's Focus with Potted Plant Silhouette */}
         <section className={styles.focusCard} aria-labelledby="focus-heading">
