@@ -4,3 +4,4 @@
 from models.user import User  # noqa: F401
 from models.task import Task, TaskPriority, TaskStatus  # noqa: F401
 from models.event import Event, EventCategory  # noqa: F401
+from models.expense import Expense, MonthlyBudget, ExpenseCategory  # noqa: F401

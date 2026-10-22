@@ -10,6 +10,7 @@ import CommandPalette from './components/ui/CommandPalette'
 import Dashboard from './pages/Dashboard'
 import Tasks from './pages/Tasks'
 import Calendar from './pages/Calendar'
+import Expenses from './pages/Expenses'
 import Settings from './pages/Settings'
 import Placeholder from './pages/Placeholder'
 import NotFound from './pages/NotFound'
@@ -125,7 +126,7 @@ function AppShell() {
                 <Route path="/goals" element={<Placeholder module="goals" />} />
                 <Route path="/habits" element={<Placeholder module="habits" />} />
                 <Route path="/study" element={<Placeholder module="study" />} />
-                <Route path="/expenses" element={<Placeholder module="expenses" />} />
+                <Route path="/expenses" element={<Expenses />} />
                 <Route path="/notes" element={<Placeholder module="notes" />} />
                 <Route path="/analytics" element={<Placeholder module="analytics" />} />
                 <Route path="/settings" element={<Settings />} />

@@ -6,6 +6,7 @@ import { getFirstName } from '../utils/user'
 import StatCard from '../components/ui/StatCard'
 import QuickCreateModal from '../components/ui/QuickCreateModal'
 import Toast from '../components/ui/Toast'
+import { CATEGORY_ICONS, formatCurrencyCompact } from '../api/expenses'
 import styles from './Dashboard.module.css'
 
 // Initial state data matching screenshot
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [taskStats, setTaskStats] = useState({
     total: 0, completed: 0, pending: 0, overdue: 0, due_today: 0, completion_pct: 0
   })
+  const [expenseStats, setExpenseStats] = useState(null)
   const [todayEvents, setTodayEvents] = useState([])
   const [upcomingEvents, setUpcomingEvents] = useState([])
   const [todayTasks, setTodayTasks] = useState([])
@@ -69,10 +71,11 @@ export default function Dashboard() {
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data) {
-          if (data.task_stats) setTaskStats(data.task_stats)
-          if (data.today_events) setTodayEvents(data.today_events)
+          if (data.task_stats)    setTaskStats(data.task_stats)
+          if (data.expense_stats) setExpenseStats(data.expense_stats)
+          if (data.today_events)  setTodayEvents(data.today_events)
           if (data.upcoming_events) setUpcomingEvents(data.upcoming_events)
-          if (data.today_tasks) setTodayTasks(data.today_tasks)
+          if (data.today_tasks)   setTodayTasks(data.today_tasks)
         }
       })
       .catch(() => {})
@@ -135,6 +138,13 @@ export default function Dashboard() {
   const taskRatio = totalTasks > 0 ? tasksCompleted / totalTasks : 0
   const dayScore = Math.round((taskRatio * 0.5 + (habitsCompleted / totalHabits) * 0.5) * 100)
 
+  // Expense stat card data
+  const monthSpending   = expenseStats?.month ?? 0
+  const budgetAmount    = expenseStats?.budget_amount ?? null
+  const budgetRemaining = expenseStats?.budget_remaining ?? null
+  const budgetPct       = expenseStats?.budget_pct ?? 0
+  const topCat          = expenseStats?.top_category ?? null
+
   // 4 Stat Cards matching the screenshot
   const statCards = [
     {
@@ -173,12 +183,16 @@ export default function Dashboard() {
     },
     {
       id: 'allowance',
-      label: 'Monthly Allowance',
-      value: '$342',
-      sub: '/ $500',
-      change: '68% of budget utilized',
+      label: 'Monthly Spending',
+      value: formatCurrencyCompact(monthSpending),
+      sub: budgetAmount ? `/ ${formatCurrencyCompact(budgetAmount)}` : null,
+      change: budgetRemaining != null
+        ? `${budgetRemaining >= 0 ? formatCurrencyCompact(budgetRemaining) + ' remaining' : formatCurrencyCompact(Math.abs(budgetRemaining)) + ' over budget'}`
+        : topCat
+          ? `Top: ${CATEGORY_ICONS[topCat] ?? ''} ${topCat}`
+          : 'No budget set',
       color: 'rose',
-      sparkProgress: 68,
+      sparkProgress: budgetPct,
       isPositive: false,
     },
   ]

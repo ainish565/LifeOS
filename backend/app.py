@@ -56,11 +56,13 @@ def create_app(config_name: str = "default") -> Flask:
     from routes.main import main_bp    # noqa: PLC0415
     from routes.tasks import tasks_bp  # noqa: PLC0415
     from routes.events import events_bp  # noqa: PLC0415
+    from routes.expenses import expenses_bp  # noqa: PLC0415
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(events_bp)
+    app.register_blueprint(expenses_bp)
 
     register_frontend(app)
 
