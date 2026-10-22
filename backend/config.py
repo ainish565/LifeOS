@@ -5,20 +5,34 @@ config.py — Application configuration for Life OS.
 import os
 from datetime import timedelta
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 
-# Read settings such as DATABASE_URL from git-ignored env files. The first file
-# to define a variable wins, and real environment variables beat all of them:
-#   1. backend/.env          — your own overrides
-#   2. <project>/.env.local  — written by `neon deploy` / `neon env pull`
+
+def load_env_files(paths) -> None:
+    """
+    Copy settings from env files into os.environ. The first file to give a variable
+    a value wins, and real environment variables beat all files.
+
+    Blank values (a leftover "DATABASE_URL=" line, say) count as "not set", so they
+    can never hide a real value from a later file. Without this, an empty line in
+    backend/.env would silently switch the app from Neon to local SQLite.
+    """
+    for path in paths:
+        for key, value in dotenv_values(path).items():
+            if value and not os.environ.get(key):
+                os.environ[key] = value
+
+
+# Git-ignored env files, highest priority first:
+#   1. backend/.env          - your own overrides
+#   2. <project>/.env.local  - written by `neon deploy` / `neon env pull`
 #   3. <project>/.env
-for env_file in (os.path.join(BASE_DIR, ".env"),
-                 os.path.join(PROJECT_DIR, ".env.local"),
-                 os.path.join(PROJECT_DIR, ".env")):
-    load_dotenv(env_file)
+load_env_files((os.path.join(BASE_DIR, ".env"),
+                os.path.join(PROJECT_DIR, ".env.local"),
+                os.path.join(PROJECT_DIR, ".env")))
 
 
 def _postgres_driver_url(url: str) -> str:

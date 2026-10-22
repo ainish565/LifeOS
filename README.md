@@ -196,38 +196,47 @@ Both use an in-memory database, so they never touch your real data.
 
 ### 4. Database: local SQLite or the shared Neon database
 
-**You don't need Neon access to work on this project.** After the one-time setup
-above, the backend automatically uses a local SQLite file
-(`backend/instance/lifeos.db`) with your own private test data. Every feature,
-test and page works the same way. On startup it prints which one it is using:
+The app stores everything (accounts, tasks, ...) in **one** database, and there are two
+possibilities. **Check which one you are on** — `dev.bat` shows it when it starts:
 
-```
- * Database: SQLite file ...\backend\instance\lifeos.db
-```
+| You see | Where accounts and data go | Who can see them |
+|---|---|---|
+| `DB  PostgreSQL database 'neondb' on ...neon.tech` (green) | The shared Neon database | The whole team |
+| `DB  LOCAL SQLite file - this is NOT the shared Neon database` (yellow) | A file on your own computer (`backend/instance/lifeos.db`) | Only you |
+| `DB  Neon branch 'dev-...' - a private copy` (yellow) | A personal copy of the data | Only you |
 
-#### Connecting to the shared Neon database (team members with access)
+**Without Neon access you can still run and work on everything.** If there is no
+`.env.local` file, the app silently falls back to your local SQLite database: login,
+tasks and every page work, but the accounts you create exist only on your computer.
+That is fine for development — just don't expect them to show up in Neon.
 
-The real data lives in a Neon Postgres project. Access is controlled by Neon
-accounts — **no passwords are shared or stored in this repo**.
+#### Getting your accounts into the shared Neon database
+
+The team's real data lives in one Neon Postgres project, and access is controlled by Neon
+accounts — **no passwords are stored in this repo**. To use it:
 
 1. Ask the project owner to invite you to the Neon organization
-   (Neon console → Organization settings → Members).
+   (Neon console → Organization settings → Members → Invite, using the email of your Neon account).
 2. Install the Neon CLI and sign in with your own account:
    ```powershell
    npm i -g neon
    neon login
    ```
-3. In the project root, link the project and create **your own branch** to work on
-   (an instant private copy of the data, so you never change production by accident):
+3. In the project root, link the project and pull the **shared** `production` data:
    ```powershell
    neon link                        # pick the LifeOS project
-   neon checkout dev-yourname --create
+   neon checkout production         # writes .env.local (git-ignored)
    ```
-   This writes your connection details to `.env.local` (git-ignored). The backend
-   reads it automatically; restart `python app.py` and it prints
-   `* Database: PostgreSQL database 'neondb' on ...neon.tech`.
-4. Switch back to the main data with `neon checkout production`, or remove
-   `.env.local` to return to local SQLite.
+4. Start the app (`.\dev.bat`) and check the banner shows the green Neon line.
+   **Register a new account** — accounts from your old local SQLite file are not copied over.
+
+Use a personal branch (`neon checkout dev-yourname --create`) only when you want to
+experiment on a private copy of the data; accounts created there are **not** visible to
+the rest of the team. Go back with `neon checkout production`, or delete `.env.local`
+to return to local SQLite.
+
+If the app is still on SQLite after step 3, open `backend\.env` (if you have one) and
+delete any empty `DATABASE_URL=` line — or delete the file; you don't need it.
 
 #### Keeping the database secure
 

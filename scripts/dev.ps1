@@ -15,6 +15,7 @@ $VenvPy   = Join-Path $VenvDir 'Scripts\python.exe'
 $ViteJs   = Join-Path $Frontend 'node_modules\vite\bin\vite.js'
 $ApiPort  = 5000
 $WebPort  = 5173
+$SharedBranch = 'production'   # the Neon branch that holds the team's shared accounts and data
 $FailCode = 10   # dev.bat pauses on this code so the message stays readable
 
 $Api = $null
@@ -47,6 +48,36 @@ function Find-SystemPython {
         Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
     if ($python) { return @{ File = $python.Source; Args = @() } }
     return $null
+}
+
+# Which database will the backend use? Returns Kind (sqlite|postgres), Branch (Neon
+# branch name from .env.local, if any) and a password-free description.
+function Get-DatabaseInfo {
+    Push-Location $Backend
+    try {
+        $out = & $VenvPy -c "import os; from config import database_url, describe_database; u = database_url(); print(('sqlite' if u.startswith('sqlite') else 'postgres') + '|' + os.environ.get('NEON_BRANCH', '') + '|' + describe_database(u))" 2>$null
+        $code = $LASTEXITCODE
+    } finally { Pop-Location }
+    if ($code -ne 0 -or -not $out) { return $null }
+    $parts = (@($out)[0]) -split '\|', 3
+    if ($parts.Count -lt 3) { return $null }
+    return [pscustomobject]@{ Kind = $parts[0]; Branch = $parts[1]; Text = $parts[2] }
+}
+
+function Write-DatabaseBanner($Db) {
+    if (-not $Db) { return }
+    if ($Db.Kind -eq 'sqlite') {
+        Write-Host '    DB    LOCAL SQLite file - this is NOT the shared Neon database' -ForegroundColor Yellow
+        Write-Host '          Accounts and data you create here stay on THIS computer only.' -ForegroundColor Yellow
+        Write-Host '          To use the shared database, see README > Database (needs a Neon invite).' -ForegroundColor Yellow
+    } elseif ($Db.Branch -and $Db.Branch -ne $SharedBranch) {
+        Write-Host "    DB    Neon branch '$($Db.Branch)' - a private copy, NOT the shared '$SharedBranch' data" -ForegroundColor Yellow
+        Write-Host "          Accounts created here will not appear for the rest of the team." -ForegroundColor Yellow
+        Write-Host "          To use the shared data run:  neon checkout $SharedBranch" -ForegroundColor Yellow
+    } else {
+        Write-Host "    DB    $($Db.Text)" -ForegroundColor Green
+        Write-Host '          Shared database: accounts and data are stored in Neon for the whole team.' -ForegroundColor Green
+    }
 }
 
 function Stop-Servers {
@@ -91,6 +122,8 @@ if (-not (Test-Path $ViteJs)) {
     try { & $Npm.Source install } finally { Pop-Location }
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $ViteJs)) { Fail 'npm install failed. See the messages above.' }
 }
+
+$DbInfo = Get-DatabaseInfo
 
 # --- 3. Make sure the ports are free -----------------------------------------
 foreach ($entry in @(@($ApiPort, 'backend'), @($WebPort, 'frontend'))) {
@@ -143,6 +176,7 @@ try {
             Write-Host '  Life OS is running' -ForegroundColor Green
             Write-Host "    App   http://localhost:$WebPort   <- open this one" -ForegroundColor Green
             Write-Host "    API   http://127.0.0.1:$ApiPort" -ForegroundColor Green
+            Write-DatabaseBanner $DbInfo
             Write-Host '    Press Ctrl+C to stop both.' -ForegroundColor Green
             Write-Host ''
 
