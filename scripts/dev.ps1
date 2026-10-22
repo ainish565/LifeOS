@@ -1,0 +1,162 @@
+<#
+  Life OS dev launcher - runs the Flask backend and the Vite frontend together
+  in the CURRENT terminal (no extra windows). Press Ctrl+C once to stop both.
+
+  Normally started through dev.bat in the project root.
+  First run on a new computer also creates backend\venv and installs the
+  Python and npm dependencies for you.
+#>
+
+$Root     = Split-Path -Parent $PSScriptRoot
+$Backend  = Join-Path $Root 'backend'
+$Frontend = Join-Path $Root 'frontend'
+$VenvDir  = Join-Path $Backend 'venv'
+$VenvPy   = Join-Path $VenvDir 'Scripts\python.exe'
+$ViteJs   = Join-Path $Frontend 'node_modules\vite\bin\vite.js'
+$ApiPort  = 5000
+$WebPort  = 5173
+$FailCode = 10   # dev.bat pauses on this code so the message stays readable
+
+$Api = $null
+$Web = $null
+
+function Write-Step([string]$Text) { Write-Host "[life-os] $Text" -ForegroundColor Cyan }
+function Write-Warn([string]$Text) { Write-Host "[life-os] $Text" -ForegroundColor Yellow }
+function Fail([string]$Text) {
+    Write-Host "[life-os] ERROR: $Text" -ForegroundColor Red
+    exit $FailCode
+}
+
+function Get-PortListener([int]$Port) {
+    $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conn) { return $null }
+    $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)" -ErrorAction SilentlyContinue
+    return [pscustomobject]@{ Pid = $conn.OwningProcess; Command = $proc.CommandLine }
+}
+
+function Test-VenvRuns {
+    if (-not (Test-Path $VenvPy)) { return $false }
+    & $VenvPy -c "pass" 2>$null | Out-Null
+    return ($LASTEXITCODE -eq 0)
+}
+
+function Find-SystemPython {
+    $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
+    if ($launcher) { return @{ File = $launcher.Source; Args = @('-3') } }
+    $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+        Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
+    if ($python) { return @{ File = $python.Source; Args = @() } }
+    return $null
+}
+
+function Stop-Servers {
+    # Kill each server's whole process tree (Flask's reloader spawns a child)
+    foreach ($proc in @($Web, $Api)) {
+        if ($proc -and -not $proc.HasExited) { & taskkill.exe /PID $proc.Id /T /F *> $null }
+    }
+    # Safety net: anything still bound to our ports. They were free when we
+    # started, so whatever listens now belongs to this run.
+    foreach ($port in @($WebPort, $ApiPort)) {
+        Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
+            ForEach-Object { & taskkill.exe /PID $_.OwningProcess /T /F *> $null }
+    }
+}
+
+# --- 1. Backend: virtual environment + Python packages -----------------------
+if (-not (Test-VenvRuns)) {
+    $sys = Find-SystemPython
+    if (-not $sys) {
+        Fail 'Python 3 was not found. Install it from https://www.python.org/downloads/ (tick "Add python.exe to PATH") and run dev.bat again.'
+    }
+    Write-Step 'Creating the backend virtual environment (first run only)...'
+    & $sys.File @($sys.Args) -m venv --clear $VenvDir
+    if ($LASTEXITCODE -ne 0 -or -not (Test-VenvRuns)) { Fail 'Could not create backend\venv.' }
+}
+& $VenvPy -c "import flask, flask_sqlalchemy, flask_cors, psycopg, dotenv" 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Step 'Installing backend dependencies (first run only)...'
+    & $VenvPy -m pip install --disable-pip-version-check -r (Join-Path $Backend 'requirements.txt')
+    if ($LASTEXITCODE -ne 0) { Fail 'pip install failed. See the messages above.' }
+}
+
+# --- 2. Frontend: Node + npm packages ----------------------------------------
+$Node = Get-Command node.exe -ErrorAction SilentlyContinue
+$Npm  = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if (-not $Node -or -not $Npm) {
+    Fail 'Node.js was not found. Install it from https://nodejs.org and run dev.bat again.'
+}
+if (-not (Test-Path $ViteJs)) {
+    Write-Step 'Installing frontend dependencies (first run only)...'
+    Push-Location $Frontend
+    try { & $Npm.Source install } finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $ViteJs)) { Fail 'npm install failed. See the messages above.' }
+}
+
+# --- 3. Make sure the ports are free -----------------------------------------
+foreach ($entry in @(@($ApiPort, 'backend'), @($WebPort, 'frontend'))) {
+    $busy = Get-PortListener $entry[0]
+    if ($busy) {
+        Fail ("Port $($entry[0]) ($($entry[1])) is already in use by PID $($busy.Pid): $($busy.Command)`n" +
+              "         If that is an earlier Life OS run, stop it with:  taskkill /PID $($busy.Pid) /T /F  and run dev.bat again.")
+    }
+}
+
+# --- 4. Start both servers and wait until they are up ------------------------
+$exitCode = 0
+try {
+    Write-Step "Starting backend on port $ApiPort..."
+    $Api = Start-Process -FilePath $VenvPy -ArgumentList 'app.py' -WorkingDirectory $Backend -NoNewWindow -PassThru
+    [void]$Api.Handle   # cache the handle so HasExited / ExitCode work reliably
+
+    # A cloud database can take a few seconds to wake up, so allow plenty of time
+    $deadline = (Get-Date).AddSeconds(90)
+    $ready = $false
+    while ((Get-Date) -lt $deadline) {
+        if ($Api.HasExited) { break }
+        try {
+            $health = Invoke-WebRequest -Uri "http://127.0.0.1:$ApiPort/api/health" -UseBasicParsing -TimeoutSec 2
+            if ($health.StatusCode -eq 200) { $ready = $true; break }
+        } catch { }
+        Start-Sleep -Milliseconds 500
+    }
+    if (-not $ready) {
+        if ($Api.HasExited) { Write-Host "[life-os] ERROR: the backend stopped during startup (exit code $($Api.ExitCode)). See the messages above." -ForegroundColor Red }
+        else { Write-Host '[life-os] ERROR: the backend did not become ready within 90 seconds.' -ForegroundColor Red }
+        $exitCode = $FailCode
+    }
+
+    if ($ready) {
+        Write-Step "Starting frontend on port $WebPort..."
+        $Web = Start-Process -FilePath $Node.Source -ArgumentList @("`"$ViteJs`"", '--strictPort') -WorkingDirectory $Frontend -NoNewWindow -PassThru
+        [void]$Web.Handle
+
+        $deadline = (Get-Date).AddSeconds(30)
+        while ((Get-Date) -lt $deadline -and -not $Web.HasExited -and -not (Get-PortListener $WebPort)) {
+            Start-Sleep -Milliseconds 300
+        }
+
+        if ($Web.HasExited) {
+            Write-Host "[life-os] ERROR: the frontend stopped during startup (exit code $($Web.ExitCode)). See the messages above." -ForegroundColor Red
+            $exitCode = $FailCode
+        } else {
+            Write-Host ''
+            Write-Host '  Life OS is running' -ForegroundColor Green
+            Write-Host "    App   http://localhost:$WebPort   <- open this one" -ForegroundColor Green
+            Write-Host "    API   http://127.0.0.1:$ApiPort" -ForegroundColor Green
+            Write-Host '    Press Ctrl+C to stop both.' -ForegroundColor Green
+            Write-Host ''
+
+            while (-not $Api.HasExited -and -not $Web.HasExited) { Start-Sleep -Milliseconds 500 }
+
+            if ($Api.HasExited) { Write-Warn "The backend stopped (exit code $($Api.ExitCode))." }
+            else { Write-Warn "The frontend stopped (exit code $($Web.ExitCode))." }
+            $exitCode = $FailCode
+        }
+    }
+}
+finally {
+    Write-Step 'Stopping backend and frontend...'
+    Stop-Servers
+    Write-Step 'Stopped.'
+}
+exit $exitCode

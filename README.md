@@ -54,6 +54,8 @@ A personal workspace for tasks, calendar, habits, goals, study, finances, notes 
 
 ```
 Life OS/
+├── dev.bat                 # One command: starts backend + frontend in this terminal
+├── scripts/dev.ps1         # The launcher dev.bat runs (setup, start, clean shutdown)
 ├── backend/                # Flask REST API
 │   ├── app.py              # App factory; also serves ../frontend/dist if built
 │   ├── config.py           # Config classes (dev/prod/testing) + session cookie settings
@@ -117,6 +119,35 @@ cd ..
 > If PowerShell blocks `Activate.ps1`, run
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or skip activation
 > and call `.\venv\Scripts\python` directly.
+
+### Quick start: one command (Windows)
+
+From the project root, in any terminal (PowerShell, cmd, or your editor's built-in terminal):
+
+```powershell
+.\dev.bat
+```
+
+This starts the Flask backend **and** the Vite frontend together **in that same terminal**
+(no extra windows), waits until both are up, then prints the address to open:
+
+```
+  Life OS is running
+    App   http://localhost:5173   <- open this one
+    API   http://127.0.0.1:5000
+    Press Ctrl+C to stop both.
+```
+
+- **Stop everything with one `Ctrl+C`.** If Windows then asks `Terminate batch job (Y/N)?`,
+  answer `Y` — both servers are already stopped by then.
+- **First run on a new computer:** it creates `backend\venv` and installs the Python and
+  npm packages for you, so you can skip step 1 below.
+- If a port (5000 or 5173) is already in use, it tells you which program is using it
+  and how to stop it, instead of starting half the app.
+- It uses whichever database is configured: the shared Neon database if you have a
+  `.env.local` (see "Database" below), otherwise a local SQLite file.
+
+The two steps below are the manual alternative (and what the script does for you).
 
 ### 2a. Development mode (hot reload) — two terminals
 
