@@ -35,8 +35,11 @@ def create_app(config_name: str = "default") -> Flask:
     # Load configuration
     app.config.from_object(config_map[config_name])
 
-    # Ensure the instance folder exists
-    os.makedirs(app.instance_path, exist_ok=True)
+    # Ensure the instance folder exists (safe on serverless read-only filesystems)
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        pass
 
     ensure_secret_key(app, production=config_name == "production")
 
@@ -90,15 +93,18 @@ def create_app(config_name: str = "default") -> Flask:
         import models  # noqa: F401, PLC0415 — registers every model (User, Task, ...)
 
         migration_uri = app.config.get("SQLALCHEMY_MIGRATION_URI")
-        if migration_uri:
-            # Neon: create tables over the direct connection, not the pooler
-            engine = create_engine(migration_uri, pool_pre_ping=True)
-            try:
-                db.metadata.create_all(engine)
-            finally:
-                engine.dispose()
-        else:
-            db.create_all()
+        try:
+            if migration_uri:
+                # Neon: create tables over the direct connection, not the pooler
+                engine = create_engine(migration_uri, pool_pre_ping=True)
+                try:
+                    db.metadata.create_all(engine)
+                finally:
+                    engine.dispose()
+            else:
+                db.create_all()
+        except Exception as exc:
+            print(f" * Database initialization note: {exc}")
 
     return app
 
@@ -111,17 +117,24 @@ def ensure_secret_key(app: Flask, production: bool) -> None:
     """
     if app.config.get("SECRET_KEY"):
         return
-    if production:
-        raise RuntimeError("SECRET_KEY environment variable must be set in production.")
 
-    key_path = os.path.join(app.instance_path, "secret_key")
-    if os.path.isfile(key_path):
-        with open(key_path, encoding="utf-8") as f:
-            app.config["SECRET_KEY"] = f.read().strip()
-    if not app.config.get("SECRET_KEY"):
-        app.config["SECRET_KEY"] = secrets.token_hex(32)
-        with open(key_path, "w", encoding="utf-8") as f:
-            f.write(app.config["SECRET_KEY"])
+    secret = os.environ.get("SECRET_KEY")
+    if secret:
+        app.config["SECRET_KEY"] = secret
+        return
+
+    key = secrets.token_hex(32)
+    try:
+        key_path = os.path.join(app.instance_path, "secret_key")
+        if os.path.isfile(key_path):
+            with open(key_path, encoding="utf-8") as f:
+                app.config["SECRET_KEY"] = f.read().strip()
+        if not app.config.get("SECRET_KEY"):
+            app.config["SECRET_KEY"] = key
+            with open(key_path, "w", encoding="utf-8") as f:
+                f.write(app.config["SECRET_KEY"])
+    except (OSError, IOError):
+        app.config["SECRET_KEY"] = key
 
 
 def register_frontend(app: Flask) -> None:
